@@ -1,6 +1,6 @@
 import "core-js/actual/array/flat-map";
 
-import { Item, Location, myAscensions, Phylum, visitUrl } from "kolmafia";
+import { Item, Location, myAscensions, Phylum, print, visitUrl } from "kolmafia";
 import { $effect, $familiar, $item, $location, $monster, $phylum, Macro, property, Snapper } from "libram";
 import { StringProperty } from "libram/dist/propertyTypes";
 import { CombatStrategy } from "../combat";
@@ -156,6 +156,14 @@ const orderedTasks = [
 export const DisQuest: Quest = {
   name: "Suburbs of Dis",
   tasks: [
+    {
+      name: "Pinch Factoid",
+      after: [],
+      completed: () => visitUrl("questlog.php?which=6&vl=t&filter=0").includes("/images/adventureimages/thepinch.gif"),
+      // eslint-disable-next-line @typescript-eslint/no-empty-function
+      do: () => {},
+      limit: { tries: 1, message: "You must own a Monster Manuel and have a factoid for The Pinch to reach this goal" },
+    },
     ...orderedTasks,
     {
       name: "Boss",
