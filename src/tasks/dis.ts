@@ -1,4 +1,4 @@
-import "core-js/actual/array/flat";
+import "core-js/actual/array/flat-map";
 
 import { Item, Location, myAscensions, Phylum, visitUrl } from "kolmafia";
 import { $effect, $familiar, $item, $location, $monster, $phylum, Macro, property, Snapper } from "libram";
@@ -129,21 +129,40 @@ const disFactory = (subquest: SubQuest): Task[] => ([
   },
 ]);
 
-const zip = <T>(items: T[][]) => {
-  return items[0].map((_, i) => items.map(j => j[i]));
-};
+const tasks = subquests.map(disFactory);
+const orderedTasks = [
+  // Get all the boss NCs
+  tasks[0][0],
+  tasks[0][1],
+  tasks[1][0],
+  tasks[1][1],
+  tasks[2][0],
+  tasks[2][1],
+  // Fight first beast bossess
+  tasks[0][2],
+  tasks[1][2],
+  // Unlock second beast bossess
+  tasks[0][3],
+  tasks[1][3],
+  // Fight second beast bossess
+  tasks[0][4],
+  tasks[1][4],
+  // Unlock and fight humanoid bosses
+  tasks[2][2],
+  tasks[2][3],
+  tasks[2][4],
+];
 
 export const DisQuest: Quest = {
   name: "Suburbs of Dis",
   tasks: [
-    ...zip(subquests.map(disFactory)).flat(),
+    ...orderedTasks,
     {
       name: "Boss",
       after: subquests.map(subquest => `Hunt Second ${subquest.name} Boss`),
       completed: () => property.getNumber("lastThingWithNoNameDefeated") === myAscensions(),
       do: () => visitUrl("suburbandis.php?action=dothis&pwd"),
       combat: new CombatStrategy(true).killHard(),
-      outfit: { familiar: $familiar`Ms. Puck Man` },
       limit: { tries: 1 },
     },
   ],
