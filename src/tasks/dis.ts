@@ -16,38 +16,6 @@ import { StringProperty } from "libram/dist/propertyTypes";
 import { CombatStrategy } from "../combat";
 import { Quest, step, Task } from "./structure";
 
-const strategy = new CombatStrategy(true)
-  .macro(new Macro().item($item`clumsiness bark`).repeat(), $monster`The Thorax`)
-  .macro(
-    new Macro().item([$item`clumsiness bark`, $item`clumsiness bark`]).repeat(),
-    $monster`The Bat in the Spats`
-  )
-  .macro(
-    new Macro().item([$item`dangerous jerkcicle`, $item`dangerous jerkcicle`]).repeat(),
-    $monster`Mammon the Elephant`
-  )
-  .macro(
-    new Macro()
-      .while_(
-        "!pastround 5",
-        new Macro().item([$item`dangerous jerkcicle`, $item`dangerous jerkcicle`])
-      )
-      .attack()
-      .repeat(),
-    $monster`The Large-Bellied Snitch`
-  )
-  .macro(
-    new Macro()
-      .if_("gotjump", new Macro().attack())
-      .while_("!pastround 30", new Macro().item($item`jar full of wind`).attack())
-      .attack(),
-    $monster`The Terrible Pinch`
-  )
-  .macro(
-    new Macro().item([$item`jar full of wind`, $item`jar full of wind`]).repeat(),
-    $monster`Thug 1 and Thug 2`
-  );
-
 type SubQuest = {
   name: string;
   quest: StringProperty;
@@ -55,6 +23,7 @@ type SubQuest = {
   item: Item;
   choices: { enableBosses: number; firstBoss: number; secondBoss: number };
   bossPhylum: Phylum;
+  strategy: CombatStrategy;
 };
 
 const subquests: SubQuest[] = [
@@ -65,6 +34,12 @@ const subquests: SubQuest[] = [
     item: $item`clumsiness bark`,
     choices: { enableBosses: 560, firstBoss: 561, secondBoss: 563 },
     bossPhylum: $phylum`beast`,
+    strategy: new CombatStrategy(true)
+      .macro(new Macro().item($item`clumsiness bark`).repeat(), $monster`The Thorax`)
+      .macro(
+        new Macro().item([$item`clumsiness bark`, $item`clumsiness bark`]).repeat(),
+        $monster`The Bat in the Spats`
+      ),
   },
   {
     name: "Glacier",
@@ -73,6 +48,21 @@ const subquests: SubQuest[] = [
     item: $item`dangerous jerkcicle`,
     choices: { enableBosses: 567, firstBoss: 568, secondBoss: 569 },
     bossPhylum: $phylum`beast`,
+    strategy: new CombatStrategy(true)
+      .macro(
+        new Macro().item([$item`dangerous jerkcicle`, $item`dangerous jerkcicle`]).repeat(),
+        $monster`Mammon the Elephant`
+      )
+      .macro(
+        new Macro()
+          .while_(
+            "!pastround 5",
+            new Macro().item([$item`dangerous jerkcicle`, $item`dangerous jerkcicle`])
+          )
+          .attack()
+          .repeat(),
+        $monster`The Large-Bellied Snitch`
+      ),
   },
   {
     name: "Maelstrom",
@@ -81,6 +71,18 @@ const subquests: SubQuest[] = [
     item: $item`jar full of wind`,
     choices: { enableBosses: 564, firstBoss: 565, secondBoss: 566 },
     bossPhylum: $phylum`humanoid`,
+    strategy: new CombatStrategy(true)
+      .macro(
+        new Macro()
+          .if_("gotjump", new Macro().attack())
+          .while_("!pastround 31", new Macro().item($item`jar full of wind`).attack())
+          .attack(),
+        $monster`The Terrible Pinch`
+      )
+      .macro(
+        new Macro().item([$item`jar full of wind`, $item`jar full of wind`]).repeat(),
+        $monster`Thug 1 and Thug 2`
+      ),
   },
 ];
 
@@ -112,7 +114,7 @@ const disFactory = (subquest: SubQuest): Task[] => [
     name: `Hunt First ${subquest.name} Boss`,
     after: [`Enable First ${subquest.name} Boss`],
     acquire: [{ item: subquest.item, num: 30 }],
-    combat: strategy,
+    combat: subquest.strategy,
     completed: () => step(subquest.quest) >= 2,
     do: subquest.location,
     effects: [
@@ -138,7 +140,7 @@ const disFactory = (subquest: SubQuest): Task[] => [
     name: `Hunt Second ${subquest.name} Boss`,
     after: [`Enable Second ${subquest.name} Boss`],
     acquire: [{ item: subquest.item, num: 30 }],
-    combat: strategy,
+    combat: subquest.strategy,
     completed: () => step(subquest.quest) === 999,
     do: subquest.location,
     effects: [
