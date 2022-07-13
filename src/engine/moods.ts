@@ -39,7 +39,9 @@ function getRelevantEffects(): { [modifier: string]: Effect[] } {
   };
 
   // Glitches if given above
-  result["mainstat"].push($effect`That's Just Cloud-Talk, Man`);
+  if (get("_campAwayCloudBuffs") < 1) {
+    result["mainstat"].push($effect`That's Just Cloud-Talk, Man`);
+  }
 
   // Class-specific
   if (myClass() === $class`Seal Clubber`) result["init"].push($effect`Silent Hunting`);
