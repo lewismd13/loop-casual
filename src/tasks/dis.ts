@@ -1,6 +1,6 @@
 import "core-js/actual/array/flat-map";
 
-import { Item, Location, myAscensions, Phylum, visitUrl } from "kolmafia";
+import { Item, Location, myAscensions, myMaxhp, Phylum, restoreHp, visitUrl } from "kolmafia";
 import {
   $effect,
   $familiar,
@@ -122,8 +122,11 @@ const disFactory = (subquest: SubQuest): Task[] => [
       ...(subquest.bossPhylum === $phylum`beast` ? [$effect`A Beastly Odor`] : []),
     ],
     limit: { soft: 5 },
-    outfit: { familiar: $familiar`Red-Nosed Snapper` },
-    prepare: () => Snapper.trackPhylum(subquest.bossPhylum),
+    outfit: { modifier: "mainstat", familiar: $familiar`Red-Nosed Snapper` },
+    prepare: () => {
+      restoreHp(myMaxhp());
+      Snapper.trackPhylum(subquest.bossPhylum);
+    }
   },
   {
     name: `Enable Second ${subquest.name} Boss`,
@@ -148,8 +151,11 @@ const disFactory = (subquest: SubQuest): Task[] => [
       ...(subquest.bossPhylum === $phylum`beast` ? [$effect`A Beastly Odor`] : []),
     ],
     limit: { soft: 5 },
-    outfit: { familiar: $familiar`Red-Nosed Snapper` },
-    prepare: () => Snapper.trackPhylum(subquest.bossPhylum),
+    outfit: { modifier: "mainstat", familiar: $familiar`Red-Nosed Snapper` },
+    prepare: () => {
+      restoreHp(myMaxhp());
+      Snapper.trackPhylum(subquest.bossPhylum);
+    },
   },
 ];
 
@@ -167,7 +173,7 @@ export const DisQuest: Quest = {
       completed: () => property.getNumber("lastThingWithNoNameDefeated") === myAscensions(),
       do: () => visitUrl("suburbandis.php?action=dothis&pwd"),
       combat: new CombatStrategy(true).killHard(),
-      outfit: { familiar: $familiar`Ms. Puck Man` },
+      outfit: { modifier: "mainstat", familiar: $familiar`Ms. Puck Man` },
       limit: { tries: 1 },
     },
   ],
