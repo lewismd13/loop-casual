@@ -6,6 +6,7 @@ import {
   $familiar,
   $item,
   $location,
+  $locations,
   $monster,
   $phylum,
   Macro,
@@ -25,6 +26,8 @@ type SubQuest = {
   bossPhylum: Phylum;
   strategy: CombatStrategy;
 };
+
+export const ANAPEST_ZONES = $locations`The Clumsiness Grove, The Glacier of Jerks, The Maelstrom of Lovers`;
 
 const subquests: SubQuest[] = [
   {
@@ -126,7 +129,7 @@ const disFactory = (subquest: SubQuest): Task[] => [
     prepare: () => {
       restoreHp(myMaxhp());
       Snapper.trackPhylum(subquest.bossPhylum);
-    }
+    },
   },
   {
     name: `Enable Second ${subquest.name} Boss`,
