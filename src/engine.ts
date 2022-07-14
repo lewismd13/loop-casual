@@ -228,9 +228,6 @@ export class Engine {
       outfit.dress();
     }
 
-    // Do any general preparation inferrable from the task
-    this.prepare(task);
-
     // Do any task-specific preparation
     if (task.prepare) task.prepare();
 
@@ -243,6 +240,11 @@ export class Engine {
     runCombat();
     while (inMultiFight()) runCombat();
     if (choiceFollowsFight()) runChoice(-1);
+
+    // Do any general post adventure actions inferrable from the task
+    this.post(task);
+
+    // Do any task-specific post adventure actions
     if (task.post) task.post();
 
     if (have($effect`Beaten Up`)) throw "Fight was lost; stop.";
@@ -334,7 +336,7 @@ export class Engine {
     });
   }
 
-  private prepare(task: Task) {
+  private post(task: Task) {
     if (task.do instanceof Location && ANAPEST_ZONES.includes(task.do)) {
       // It's easy for mafia to lose track of items in anapest zones, e.g. glob of Blank-Out
       cliExecute("refresh inv");
