@@ -24,7 +24,7 @@ type SubQuest = {
   item: Item;
   choices: { enableBosses: number; firstBoss: number; secondBoss: number };
   bossPhylum: Phylum;
-  strategy: CombatStrategy;
+  combat: CombatStrategy;
 };
 
 export const ANAPEST_ZONES = $locations`The Clumsiness Grove, The Glacier of Jerks, The Maelstrom of Lovers`;
@@ -37,12 +37,13 @@ const subquests: SubQuest[] = [
     item: $item`clumsiness bark`,
     choices: { enableBosses: 560, firstBoss: 561, secondBoss: 563 },
     bossPhylum: $phylum`beast`,
-    strategy: new CombatStrategy(true)
+    combat: new CombatStrategy()
       .macro(new Macro().item($item`clumsiness bark`).repeat(), $monster`The Thorax`)
       .macro(
         new Macro().item([$item`clumsiness bark`, $item`clumsiness bark`]).repeat(),
         $monster`The Bat in the Spats`
-      ),
+      )
+      .ignore(),
   },
   {
     name: "Glacier",
@@ -51,7 +52,7 @@ const subquests: SubQuest[] = [
     item: $item`dangerous jerkcicle`,
     choices: { enableBosses: 567, firstBoss: 568, secondBoss: 569 },
     bossPhylum: $phylum`beast`,
-    strategy: new CombatStrategy(true)
+    combat: new CombatStrategy()
       .macro(
         new Macro().item([$item`dangerous jerkcicle`, $item`dangerous jerkcicle`]).repeat(),
         $monster`Mammon the Elephant`
@@ -65,7 +66,8 @@ const subquests: SubQuest[] = [
           .attack()
           .repeat(),
         $monster`The Large-Bellied Snitch`
-      ),
+      )
+      .ignore(),
   },
   {
     name: "Maelstrom",
@@ -74,7 +76,7 @@ const subquests: SubQuest[] = [
     item: $item`jar full of wind`,
     choices: { enableBosses: 564, firstBoss: 565, secondBoss: 566 },
     bossPhylum: $phylum`humanoid`,
-    strategy: new CombatStrategy(true)
+    combat: new CombatStrategy()
       .macro(
         new Macro()
           .if_("gotjump", new Macro().attack())
@@ -85,7 +87,8 @@ const subquests: SubQuest[] = [
       .macro(
         new Macro().item([$item`jar full of wind`, $item`jar full of wind`]).repeat(),
         $monster`Thug 1 and Thug 2`
-      ),
+      )
+      .ignore(),
   },
 ];
 
@@ -95,6 +98,7 @@ const disFactory = (subquest: SubQuest): Task[] => [
     after: [],
     ready: () => property.getNumber("lastThingWithNoNameDefeated") < myAscensions(),
     acquire: [{ item: subquest.item, num: 25 }],
+    combat: subquest.combat,
     choices: { [subquest.choices.enableBosses]: 1 },
     completed: () => step(subquest.quest) >= 0,
     do: subquest.location,
@@ -106,6 +110,7 @@ const disFactory = (subquest: SubQuest): Task[] => [
     name: `Enable First ${subquest.name} Boss`,
     after: [`Enable ${subquest.name} Bosses`],
     acquire: [{ item: subquest.item, num: 25 }],
+    combat: subquest.combat,
     choices: { [subquest.choices.firstBoss]: 1 },
     completed: () => step(subquest.quest) >= 1,
     do: subquest.location,
@@ -117,7 +122,8 @@ const disFactory = (subquest: SubQuest): Task[] => [
     name: `Hunt First ${subquest.name} Boss`,
     after: [`Enable First ${subquest.name} Boss`],
     acquire: [{ item: subquest.item, num: 30 }],
-    combat: subquest.strategy,
+    combat: subquest.combat,
+    boss: true,
     completed: () => step(subquest.quest) >= 2,
     do: subquest.location,
     effects: [
@@ -135,6 +141,7 @@ const disFactory = (subquest: SubQuest): Task[] => [
     name: `Enable Second ${subquest.name} Boss`,
     after: [`Hunt First ${subquest.name} Boss`],
     acquire: [{ item: subquest.item, num: 25 }],
+    combat: subquest.combat,
     choices: { [subquest.choices.secondBoss]: 1 },
     completed: () => step(subquest.quest) >= 3,
     do: subquest.location,
@@ -146,7 +153,8 @@ const disFactory = (subquest: SubQuest): Task[] => [
     name: `Hunt Second ${subquest.name} Boss`,
     after: [`Enable Second ${subquest.name} Boss`],
     acquire: [{ item: subquest.item, num: 30 }],
-    combat: subquest.strategy,
+    combat: subquest.combat,
+    boss: true,
     completed: () => step(subquest.quest) === 999,
     do: subquest.location,
     effects: [
