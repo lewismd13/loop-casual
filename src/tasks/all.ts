@@ -18,6 +18,7 @@ import { TowerQuest } from "./level13";
 import { KeysQuest, MiscQuest } from "./misc";
 import { Task } from "../engine/task";
 import { LevelingQuest } from "./leveling";
+import { DisQuest } from "./dis";
 import { getTasks } from "grimoire-kolmafia";
 
 export function all_tasks(): Task[] {
@@ -78,4 +79,8 @@ export function level_tasks(): Task[] {
 
 export function organ_tasks(): Task[] {
   return getTasks([FriarQuest, OrganQuest]);
+}
+
+export function dis_tasks(): Task[] {
+  return getTasks([DisQuest]);
 }
