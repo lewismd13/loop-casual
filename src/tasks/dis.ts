@@ -13,9 +13,10 @@ import {
   property,
   Snapper,
 } from "libram";
+import { step } from "grimoire-kolmafia";
 import { StringProperty } from "libram/dist/propertyTypes";
-import { CombatStrategy } from "../combat";
-import { Quest, step, Task } from "./structure";
+import { CombatStrategy } from "../engine/combat";
+import { Quest, Task } from "../engine/task";
 
 type SubQuest = {
   name: string;
@@ -183,7 +184,7 @@ export const DisQuest: Quest = {
       after: subquests.map((subquest) => `Hunt Second ${subquest.name} Boss`),
       completed: () => property.getNumber("lastThingWithNoNameDefeated") === myAscensions(),
       do: () => visitUrl("suburbandis.php?action=dothis&pwd"),
-      combat: new CombatStrategy(true).killHard(),
+      combat: new CombatStrategy().killHard(),
       outfit: { modifier: "mainstat", familiar: $familiar`Ms. Puck Man` },
       limit: { tries: 1 },
     },
