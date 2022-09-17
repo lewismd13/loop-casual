@@ -98,7 +98,6 @@ const disFactory = (subquest: SubQuest): Task[] => [
     name: `Enable ${subquest.name} Bosses`,
     after: [],
     ready: () => property.getNumber("lastThingWithNoNameDefeated") < myAscensions(),
-    acquire: [{ item: subquest.item, num: 25 }],
     combat: subquest.combat,
     choices: { [subquest.choices.enableBosses]: 1 },
     completed: () => step(subquest.quest) >= 0,
@@ -110,7 +109,6 @@ const disFactory = (subquest: SubQuest): Task[] => [
   {
     name: `Enable First ${subquest.name} Boss`,
     after: [`Enable ${subquest.name} Bosses`],
-    acquire: [{ item: subquest.item, num: 25 }],
     combat: subquest.combat,
     choices: { [subquest.choices.firstBoss]: 1 },
     completed: () => step(subquest.quest) >= 1,
@@ -122,7 +120,7 @@ const disFactory = (subquest: SubQuest): Task[] => [
   {
     name: `Hunt First ${subquest.name} Boss`,
     after: [`Enable First ${subquest.name} Boss`],
-    acquire: [{ item: subquest.item, num: 30 }],
+    acquire: [{ item: subquest.item, num: 6 }],
     combat: subquest.combat,
     boss: true,
     completed: () => step(subquest.quest) >= 2,
@@ -141,7 +139,6 @@ const disFactory = (subquest: SubQuest): Task[] => [
   {
     name: `Enable Second ${subquest.name} Boss`,
     after: [`Hunt First ${subquest.name} Boss`],
-    acquire: [{ item: subquest.item, num: 25 }],
     combat: subquest.combat,
     choices: { [subquest.choices.secondBoss]: 1 },
     completed: () => step(subquest.quest) >= 3,
@@ -153,7 +150,7 @@ const disFactory = (subquest: SubQuest): Task[] => [
   {
     name: `Hunt Second ${subquest.name} Boss`,
     after: [`Enable Second ${subquest.name} Boss`],
-    acquire: [{ item: subquest.item, num: 30 }],
+    acquire: [{ item: subquest.item, num: 6 }],
     combat: subquest.combat,
     boss: true,
     completed: () => step(subquest.quest) === 999,
