@@ -44,6 +44,33 @@ function tryCape(sword: Item, ...rest: Item[]) {
   return rest;
 }
 
+function farmingNookWithAutumnaton() {
+  /*  If we have fallbot, we want to start the Nook ASAP, but we also don't want to finish it
+      until we've completed all of the other quests so we don't waste any evil eyes.
+
+      This function returns true if the nook is available to farm and we still have other quests to complete.
+  */
+  return (
+    get("hasAutumnaton") &&
+    get("cyrptNookEvilness") < 50 &&
+    !(
+      step("questL02Larva") === 999 &&
+      step("questL03Rat") === 999 &&
+      step("questL04Bat") === 999 &&
+      step("questL05Goblin") === 999 &&
+      step("questL06Friar") === 999 &&
+      get("cyrptAlcoveEvilness") === 0 &&
+      get("cyrptCrannyEvilness") === 0 &&
+      get("cyrptNicheEvilness") === 0 &&
+      step("questL08Trapper") === 999 &&
+      step("questL09Topping") === 999 &&
+      step("questL10Garbage") === 999 &&
+      step("questL11MacGuffin") === 999 &&
+      step("questL12War") === 999
+    )
+  );
+}
+
 const slay_macro = new Macro()
   .trySkill($skill`Slay the Dead`)
   .attack()
@@ -174,7 +201,8 @@ const Nook: Task[] = [
     priority: () => get("lastCopyableMonster") === $monster`spiny skelelton`,
     prepare: tuneCape,
     acquire: [{ item: $item`gravy boat` }],
-    ready: () => get("camelSpit") >= 100 || !have($familiar`Melodramedary`),
+    ready: () =>
+      (get("camelSpit") >= 100 || !have($familiar`Melodramedary`)) && !farmingNookWithAutumnaton(),
     completed: () => get("cyrptNookEvilness") <= 25,
     do: (): void => {
       useSkill($skill`Map the Monsters`);
@@ -239,7 +267,11 @@ const Nook: Task[] = [
     after: ["Start"],
     prepare: tuneCape,
     acquire: [{ item: $item`gravy boat` }],
-    ready: () => get("cyrptNookEvilness") < 30 && !have($item`evil eye`),
+    priority: () => get("hasAutumnaton"),
+    ready: () =>
+      (get("cyrptNookEvilness") < 30 || get("hasAutumnaton")) &&
+      !have($item`evil eye`) &&
+      !farmingNookWithAutumnaton(),
     completed: () => get("cyrptNookEvilness") <= 25,
     do: $location`The Defiled Nook`,
     post: (): void => {
@@ -260,6 +292,7 @@ const Nook: Task[] = [
   {
     name: "Nook Boss",
     after: ["Nook", "Nook Eye", "Nook Simple"],
+    ready: () => !farmingNookWithAutumnaton(),
     completed: () => get("cyrptNookEvilness") === 0,
     do: $location`The Defiled Nook`,
     boss: true,
@@ -273,8 +306,9 @@ export const CryptQuest: Quest = {
   tasks: [
     {
       name: "Start",
-      after: [],
+      after: ["Toot/Finish"],
       ready: () => myLevel() >= 7,
+      priority: () => get("hasAutumnaton"),
       completed: () => step("questL07Cyrptic") !== -1,
       do: () => visitUrl("council.php"),
       limit: { tries: 1 },

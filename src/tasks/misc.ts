@@ -1,14 +1,17 @@
 import {
   adv1,
   cliExecute,
+  expectedColdMedicineCabinet,
   familiarEquippedEquipment,
   familiarWeight,
+  getWorkshed,
   itemAmount,
   myBasestat,
   myPrimestat,
   retrieveItem,
   retrievePrice,
   runChoice,
+  totalTurnsPlayed,
   use,
   useFamiliar,
   useSkill,
@@ -23,6 +26,7 @@ import {
   $location,
   $monster,
   $skill,
+  AutumnAton,
   Clan,
   get,
   getSaleValue,
@@ -34,6 +38,7 @@ import {
 import { CombatStrategy } from "../engine/combat";
 import { Quest } from "../engine/task";
 import { OutfitSpec, step } from "grimoire-kolmafia";
+import { args } from "../main";
 
 export const MiscQuest: Quest = {
   name: "Misc",
@@ -318,6 +323,65 @@ export const MiscQuest: Quest = {
       limit: { tries: 10 },
     },
     {
+      name: "CMC Pills",
+      ready: () =>
+        getWorkshed() === $item`cold medicine cabinet` &&
+        (get("_coldMedicineConsults") === 0 ||
+          totalTurnsPlayed() >= get("_nextColdMedicineConsult")) &&
+        $items`Extrovermectin™`.includes(expectedColdMedicineCabinet().pill),
+      completed: () => get("_coldMedicineConsults") >= 5,
+      priority: () => true,
+      do: () => cliExecute("cmc pill"),
+      limit: { tries: 5 },
+    },
+    {
+      name: "Autumn-aton",
+      after: [],
+      ready: () => have($item`autumn-aton`),
+      completed: () => step("questL13Final") >= 0,
+      priority: () => true,
+      combat: new CombatStrategy().macro(new Macro()).kill(),
+      do: () => {
+        //make sure all available upgrades are installed
+        AutumnAton.upgrade();
+        //get upgrades
+        if (!AutumnAton.currentUpgrades().includes("leftleg1")) {
+          AutumnAton.sendTo($location`Noob Cave`);
+        } else if (
+          !AutumnAton.currentUpgrades().includes("rightleg1") &&
+          AutumnAton.availableLocations().includes($location`The Haunted Kitchen`)
+        ) {
+          AutumnAton.sendTo($location`The Haunted Kitchen`);
+        } else if (!AutumnAton.currentUpgrades().includes("leftarm1")) {
+          AutumnAton.sendTo($location`The Haunted Pantry`);
+        } else if (
+          !AutumnAton.currentUpgrades().includes("rightarm1") &&
+          AutumnAton.availableLocations().includes($location`Twin Peak`)
+        ) {
+          AutumnAton.sendTo($location`Twin Peak`);
+        }
+        //lighthouse
+        else if (
+          AutumnAton.currentUpgrades().length >= 4 &&
+          step("questL12War") >= 1 &&
+          itemAmount($item`barrel of gunpowder`) < 5 &&
+          get("sidequestLighthouseCompleted") === "none"
+        ) {
+          adv1($location`Sonofa Beach`);
+          AutumnAton.sendTo($location`Sonofa Beach`);
+        }
+        //farming
+        else if (AutumnAton.availableLocations().includes($location`The Defiled Nook`)) {
+          AutumnAton.sendTo($location`The Defiled Nook`);
+        }
+        //If all else fails, grab an autumn leaf. This shouldn't ever happen
+        else {
+          AutumnAton.sendTo($location`The Sleazy Back Alley`);
+        }
+      },
+      limit: { tries: 15 },
+    },
+    {
       name: "Goose Exp",
       after: [],
       priority: () => true,
@@ -330,6 +394,15 @@ export const MiscQuest: Quest = {
         set("_loop_casual_chef_goose", "true");
       },
       outfit: { familiar: $familiar`Grey Goose` },
+      limit: { tries: 1 },
+      freeaction: true,
+    },
+    {
+      name: "Workshed",
+      after: [],
+      priority: () => true,
+      completed: () => getWorkshed() !== $item`none` || !have(args.workshed),
+      do: () => use(args.workshed),
       limit: { tries: 1 },
       freeaction: true,
     },
