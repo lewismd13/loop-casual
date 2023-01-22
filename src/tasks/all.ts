@@ -15,7 +15,7 @@ import { PalindomeQuest } from "./level11_palindome";
 import { MacguffinQuest } from "./level11";
 import { WarQuest } from "./level12";
 import { TowerQuest } from "./level13";
-import { KeysQuest, MiscQuest } from "./misc";
+import { DigitalQuest, KeysQuest, MiscQuest } from "./misc";
 import { Task } from "../engine/task";
 import { LevelingQuest } from "./leveling";
 import { getTasks } from "grimoire-kolmafia";
@@ -42,6 +42,7 @@ export function all_tasks(): Task[] {
     PalindomeQuest,
     MacguffinQuest,
     WarQuest,
+    DigitalQuest,
     TowerQuest,
   ];
   return getTasks(quests);
@@ -67,6 +68,7 @@ export function quest_tasks(): Task[] {
     PalindomeQuest,
     MacguffinQuest,
     WarQuest,
+    DigitalQuest,
     TowerQuest,
   ];
   return getTasks(quests);
@@ -77,5 +79,5 @@ export function level_tasks(): Task[] {
 }
 
 export function organ_tasks(): Task[] {
-  return getTasks([FriarQuest, OrganQuest]);
+  return getTasks([TootQuest, FriarQuest, OrganQuest]);
 }

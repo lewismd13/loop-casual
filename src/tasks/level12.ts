@@ -128,6 +128,7 @@ const Lighthouse: Task[] = [
       itemAmount($item`barrel of gunpowder`) >= 5 ||
       get("sidequestLighthouseCompleted") !== "none" ||
       !have($item`Fourth of May Cosplay Saber`) ||
+      get("hasAutumnaton") ||
       args.fluffers,
     do: $location`Sonofa Beach`,
     outfit: (): OutfitSpec => {
@@ -171,6 +172,7 @@ const Lighthouse: Task[] = [
     completed: () =>
       itemAmount($item`barrel of gunpowder`) >= 5 ||
       get("sidequestLighthouseCompleted") !== "none" ||
+      get("hasAutumnaton") ||
       args.fluffers,
     do: $location`Sonofa Beach`,
     outfit: { modifier: "+combat" },
@@ -180,6 +182,7 @@ const Lighthouse: Task[] = [
   {
     name: "Lighthouse End",
     after: ["Lighthouse Basic"],
+    ready: () => itemAmount($item`barrel of gunpowder`) >= 5,
     completed: () => get("sidequestLighthouseCompleted") !== "none" || args.fluffers,
     outfit: { equip: $items`beer helmet, distressed denim pants, bejeweled pledge pin` },
     do: (): void => {
@@ -449,6 +452,7 @@ const Nuns: Task[] = [
       }
       return {
         modifier: "meat",
+        familiar: $familiar`Hobo Monkey`,
         equip: $items`beer helmet, distressed denim pants, bejeweled pledge pin, amulet coin`, // Use amulet coin (if we have) to avoid using orb
       };
     },
@@ -466,7 +470,7 @@ export const WarQuest: Quest = {
   tasks: [
     {
       name: "Start",
-      after: [],
+      after: ["Toot/Finish"],
       ready: () => myLevel() >= 12,
       completed: () => step("questL12War") !== -1,
       do: () => visitUrl("council.php"),
