@@ -27,6 +27,7 @@ jobs:
           echo "export const lastCommitHash: string | undefined = \"$(git rev-parse --short HEAD)\";" > src/_git_commit.ts
           yarn run build
           git checkout src/_git_commit.ts
+          git checkout yarn.lock
       - run: |
           git config user.name "Build Script"
           git config user.email "<>"
@@ -35,8 +36,10 @@ jobs:
           git switch release
           rm -rf scripts/
           rm -rf ccs/
+          rm -rf relay/
           mv KoLmafia/* ./
           rm -rf KoLmafia
           git add scripts/
+          git add relay/
           git commit -m "Build Mafia files for commit $SHA"
           git push origin release

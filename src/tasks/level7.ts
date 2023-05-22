@@ -44,6 +44,33 @@ function tryCape(sword: Item, ...rest: Item[]) {
   return rest;
 }
 
+function farmingNookWithAutumnaton() {
+  /*  If we have fallbot, we want to start the Nook ASAP, but we also don't want to finish it
+      until we've completed all of the other quests so we don't waste any evil eyes.
+
+      This function returns true if the nook is available to farm and we still have other quests to complete.
+  */
+  return (
+    get("hasAutumnaton") &&
+    get("cyrptNookEvilness") < 50 &&
+    !(
+      step("questL02Larva") === 999 &&
+      step("questL03Rat") === 999 &&
+      step("questL04Bat") === 999 &&
+      step("questL05Goblin") === 999 &&
+      step("questL06Friar") === 999 &&
+      get("cyrptAlcoveEvilness") === 0 &&
+      get("cyrptCrannyEvilness") === 0 &&
+      get("cyrptNicheEvilness") === 0 &&
+      step("questL08Trapper") === 999 &&
+      step("questL09Topping") === 999 &&
+      step("questL10Garbage") === 999 &&
+      step("questL11MacGuffin") === 999 &&
+      step("questL12War") === 999
+    )
+  );
+}
+
 const slay_macro = new Macro()
   .trySkill($skill`Slay the Dead`)
   .attack()
@@ -70,17 +97,18 @@ const Alcove: Task[] = [
       { item: $item`panty raider camouflage`, price: 2000, optional: true },
       { item: $item`Freddie's blessing of Mercury`, price: 2000, optional: true },
     ],
-    completed: () => get("cyrptAlcoveEvilness") <= 25,
+    completed: () => get("cyrptAlcoveEvilness") <= 13,
     do: $location`The Defiled Alcove`,
     outfit: (): OutfitSpec => {
       return {
         equip: tryCape($item`costume sword`, $item`gravy boat`),
         modifier: "init 850max, sword",
+        familiar: $familiar`Oily Woim`,
       };
     },
     choices: { 153: 4 },
     combat: new CombatStrategy().macro(slay_macro, $monsters`modern zmobie, conjoined zmombie`),
-    limit: { turns: 25 },
+    limit: { turns: 37 },
   },
   {
     name: "Alcove Boss",
@@ -99,7 +127,7 @@ const Cranny: Task[] = [
     after: ["Start"],
     prepare: tuneCape,
     acquire: [{ item: $item`gravy boat` }],
-    completed: () => get("cyrptCrannyEvilness") <= 25,
+    completed: () => get("cyrptCrannyEvilness") <= 13,
     do: $location`The Defiled Cranny`,
     outfit: (): OutfitSpec => {
       return {
@@ -117,7 +145,7 @@ const Cranny: Task[] = [
         $monsters`swarm of ghuol whelps, big swarm of ghuol whelps, giant swarm of ghuol whelps, huge ghuol`
       )
       .macro(slay_macro),
-    limit: { turns: 25 },
+    limit: { turns: 37 },
   },
   {
     name: "Cranny Boss",
@@ -136,7 +164,7 @@ const Niche: Task[] = [
     after: ["Start"],
     prepare: tuneCape,
     acquire: [{ item: $item`gravy boat` }],
-    completed: () => get("cyrptNicheEvilness") <= 25,
+    completed: () => get("cyrptNicheEvilness") <= 13,
     do: $location`The Defiled Niche`,
     choices: { 157: 4 },
     outfit: (): OutfitSpec => {
@@ -154,7 +182,7 @@ const Niche: Task[] = [
     combat: new CombatStrategy()
       .macro(new Macro().trySkill($skill`Fire Extinguisher: Zone Specific`).step(slay_macro))
       .banish($monsters`basic lihc, senile lihc, slick lihc`),
-    limit: { turns: 25 },
+    limit: { turns: 37 },
   },
   {
     name: "Niche Boss",
@@ -174,8 +202,9 @@ const Nook: Task[] = [
     priority: () => get("lastCopyableMonster") === $monster`spiny skelelton`,
     prepare: tuneCape,
     acquire: [{ item: $item`gravy boat` }],
-    ready: () => get("camelSpit") >= 100 || !have($familiar`Melodramedary`),
-    completed: () => get("cyrptNookEvilness") <= 25,
+    ready: () =>
+      (get("camelSpit") >= 100 || !have($familiar`Melodramedary`)) && !farmingNookWithAutumnaton(),
+    completed: () => get("cyrptNookEvilness") <= 13,
     do: (): void => {
       useSkill($skill`Map the Monsters`);
       if (get("mappingMonsters")) {
@@ -227,7 +256,7 @@ const Nook: Task[] = [
     name: "Nook Eye", // In case we get eyes from outside sources (Nostalgia)
     after: ["Start"],
     ready: () => have($item`evil eye`),
-    completed: () => get("cyrptNookEvilness") <= 25,
+    completed: () => get("cyrptNookEvilness") <= 13,
     do: (): void => {
       cliExecute("use * evil eye");
     },
@@ -239,11 +268,15 @@ const Nook: Task[] = [
     after: ["Start"],
     prepare: tuneCape,
     acquire: [{ item: $item`gravy boat` }],
-    ready: () => get("cyrptNookEvilness") < 30 && !have($item`evil eye`),
-    completed: () => get("cyrptNookEvilness") <= 25,
+    priority: () => get("hasAutumnaton"),
+    ready: () =>
+      (get("cyrptNookEvilness") < 30 || get("hasAutumnaton")) &&
+      !have($item`evil eye`) &&
+      !farmingNookWithAutumnaton(),
+    completed: () => get("cyrptNookEvilness") <= 13,
     do: $location`The Defiled Nook`,
     post: (): void => {
-      while (have($item`evil eye`) && get("cyrptNookEvilness") > 25) cliExecute("use * evil eye");
+      while (have($item`evil eye`) && get("cyrptNookEvilness") > 13) cliExecute("use * evil eye");
     },
     outfit: (): OutfitSpec => {
       return {
@@ -260,6 +293,7 @@ const Nook: Task[] = [
   {
     name: "Nook Boss",
     after: ["Nook", "Nook Eye", "Nook Simple"],
+    ready: () => !farmingNookWithAutumnaton(),
     completed: () => get("cyrptNookEvilness") === 0,
     do: $location`The Defiled Nook`,
     boss: true,
@@ -273,8 +307,9 @@ export const CryptQuest: Quest = {
   tasks: [
     {
       name: "Start",
-      after: [],
+      after: ["Toot/Finish"],
       ready: () => myLevel() >= 7,
+      priority: () => get("hasAutumnaton"),
       completed: () => step("questL07Cyrptic") !== -1,
       do: () => visitUrl("council.php"),
       limit: { tries: 1 },
@@ -288,11 +323,15 @@ export const CryptQuest: Quest = {
       name: "Bonerdagon",
       after: ["Alcove Boss", "Cranny Boss", "Niche Boss", "Nook Boss"],
       completed: () => step("questL07Cyrptic") >= 1,
-      do: $location`Haert of the Cyrpt`,
+      do: () => {
+        adv1($location`Haert of the Cyrpt`, -1, "");
+        if (get("lastEncounter") !== "The Bonerdagon")
+          visitUrl(toUrl($location`The Defiled Cranny`));
+      },
       choices: { 527: 1 },
       boss: true,
       combat: new CombatStrategy().kill(),
-      limit: { tries: 1 },
+      limit: { tries: 2 },
     },
     {
       name: "Finish",

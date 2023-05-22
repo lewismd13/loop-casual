@@ -1,14 +1,19 @@
 import {
   adv1,
   cliExecute,
+  expectedColdMedicineCabinet,
   familiarEquippedEquipment,
   familiarWeight,
+  gamedayToInt,
+  getProperty,
+  getWorkshed,
   itemAmount,
   myBasestat,
   myPrimestat,
   retrieveItem,
   retrievePrice,
   runChoice,
+  totalTurnsPlayed,
   use,
   useFamiliar,
   useSkill,
@@ -23,6 +28,7 @@ import {
   $location,
   $monster,
   $skill,
+  AutumnAton,
   Clan,
   get,
   getSaleValue,
@@ -34,6 +40,7 @@ import {
 import { CombatStrategy } from "../engine/combat";
 import { Quest } from "../engine/task";
 import { OutfitSpec, step } from "grimoire-kolmafia";
+import { args } from "../main";
 
 export const MiscQuest: Quest = {
   name: "Misc",
@@ -48,7 +55,7 @@ export const MiscQuest: Quest = {
     },
     {
       name: "Unlock Island",
-      after: [],
+      after: ["Mosquito/Start"],
       completed: () =>
         have($item`dingy dinghy`) ||
         have($item`junk junk`) ||
@@ -162,11 +169,11 @@ export const MiscQuest: Quest = {
           },
           {
             monster: $monster`annoyed snake`,
-            value: 25 * 0.5 + 25,
+            value: gamedayToInt(),
           },
           {
             monster: $monster`slime blob`,
-            value: 20 * 0.4 + 50 * 0.2 + 250 * 0.01,
+            value: 95 - gamedayToInt(),
           },
         ];
 
@@ -318,6 +325,65 @@ export const MiscQuest: Quest = {
       limit: { tries: 10 },
     },
     {
+      name: "CMC Pills",
+      ready: () =>
+        getWorkshed() === $item`cold medicine cabinet` &&
+        (get("_coldMedicineConsults") === 0 ||
+          totalTurnsPlayed() >= get("_nextColdMedicineConsult")) &&
+        $items`Extrovermectin™`.includes(expectedColdMedicineCabinet().pill),
+      completed: () => get("_coldMedicineConsults") >= 5,
+      priority: () => true,
+      do: () => cliExecute("cmc pill"),
+      limit: { tries: 5 },
+    },
+    {
+      name: "Autumn-aton",
+      after: [],
+      ready: () => have($item`autumn-aton`),
+      completed: () => step("questL13Final") >= 0,
+      priority: () => true,
+      combat: new CombatStrategy().macro(new Macro()).kill(),
+      do: () => {
+        //make sure all available upgrades are installed
+        AutumnAton.upgrade();
+        //get upgrades
+        if (!AutumnAton.currentUpgrades().includes("leftleg1")) {
+          AutumnAton.sendTo($location`Noob Cave`);
+        } else if (
+          !AutumnAton.currentUpgrades().includes("rightleg1") &&
+          AutumnAton.availableLocations().includes($location`The Haunted Kitchen`)
+        ) {
+          AutumnAton.sendTo($location`The Haunted Kitchen`);
+        } else if (!AutumnAton.currentUpgrades().includes("leftarm1")) {
+          AutumnAton.sendTo($location`The Haunted Pantry`);
+        } else if (
+          !AutumnAton.currentUpgrades().includes("rightarm1") &&
+          AutumnAton.availableLocations().includes($location`Twin Peak`)
+        ) {
+          AutumnAton.sendTo($location`Twin Peak`);
+        }
+        //lighthouse
+        else if (
+          AutumnAton.currentUpgrades().length >= 4 &&
+          step("questL12War") >= 1 &&
+          itemAmount($item`barrel of gunpowder`) < 5 &&
+          get("sidequestLighthouseCompleted") === "none"
+        ) {
+          adv1($location`Sonofa Beach`);
+          AutumnAton.sendTo($location`Sonofa Beach`);
+        }
+        //farming
+        else if (AutumnAton.availableLocations().includes($location`The Defiled Nook`)) {
+          AutumnAton.sendTo($location`The Defiled Nook`);
+        }
+        //If all else fails, grab an autumn leaf. This shouldn't ever happen
+        else {
+          AutumnAton.sendTo($location`The Sleazy Back Alley`);
+        }
+      },
+      limit: { tries: 15 },
+    },
+    {
       name: "Goose Exp",
       after: [],
       priority: () => true,
@@ -330,6 +396,15 @@ export const MiscQuest: Quest = {
         set("_loop_casual_chef_goose", "true");
       },
       outfit: { familiar: $familiar`Grey Goose` },
+      limit: { tries: 1 },
+      freeaction: true,
+    },
+    {
+      name: "Workshed",
+      after: [],
+      priority: () => true,
+      completed: () => getWorkshed() !== $item`none` || !have(args.workshed),
+      do: () => use(args.workshed),
       limit: { tries: 1 },
       freeaction: true,
     },
@@ -435,3 +510,90 @@ export const KeysQuest: Quest = {
     },
   ],
 };
+
+export const DigitalQuest: Quest = {
+  name: "Digital",
+  tasks: [
+    {
+      name: "Open",
+      after: ["Mosquito/Start"],
+      completed: () => have($item`continuum transfunctioner`),
+      do: () => {
+        visitUrl("place.php?whichplace=forestvillage&action=fv_mystic");
+        runChoice(1);
+        runChoice(1);
+        runChoice(1);
+      },
+      limit: { tries: 1 },
+      freeaction: true,
+    },
+    {
+      name: "Fungus",
+      after: ["Open"],
+      completed: () => getScore() >= 10000,
+      ready: () => get("8BitColor", "black") === "red",
+      // eslint-disable-next-line libram/verify-constants
+      do: $location`The Fungus Plains`,
+      outfit: { modifier: "meat", equip: $items`continuum transfunctioner` },
+      combat: new CombatStrategy().kill(),
+      limit: { tries: 21 },
+      delay: 5,
+    },
+    {
+      name: "Vanya",
+      after: ["Open"],
+      completed: () => getScore() >= 10000,
+      ready: () => get("8BitColor", "black") === "black" || get("8BitColor", "black") === "",
+      // eslint-disable-next-line libram/verify-constants
+      do: $location`Vanya's Castle`,
+      outfit: { modifier: "init", equip: $items`continuum transfunctioner` },
+      combat: new CombatStrategy().kill(),
+      limit: { tries: 21 },
+      delay: 10,
+    },
+    {
+      name: "Megalo",
+      after: ["Open"],
+      completed: () => getScore() >= 10000,
+      ready: () => get("8BitColor", "black") === "blue",
+      // eslint-disable-next-line libram/verify-constants
+      do: $location`Megalo-City`,
+      outfit: { modifier: "DA", equip: $items`continuum transfunctioner` },
+      combat: new CombatStrategy().kill(),
+      limit: { tries: 21 },
+      delay: 5,
+    },
+    {
+      name: "Hero",
+      after: ["Open"],
+      completed: () => getScore() >= 10000,
+      ready: () => get("8BitColor", "black") === "green",
+      // eslint-disable-next-line libram/verify-constants
+      do: $location`Hero's Field`,
+      outfit: { modifier: "item", equip: $items`continuum transfunctioner` },
+      combat: new CombatStrategy().kill(),
+      limit: { tries: 21 },
+      delay: 5,
+    },
+    {
+      name: "Key",
+      after: ["Open", "Fungus", "Vanya", "Megalo", "Hero"],
+      completed: () =>
+        have($item`digital key`) || get("nsTowerDoorKeysUsed").includes("digital key"),
+      do: () => {
+        if (getScore() >= 10000) {
+          visitUrl("place.php?whichplace=8bit&action=8treasure");
+          runChoice(1);
+        }
+      },
+      outfit: { equip: $items`continuum transfunctioner` },
+      limit: { tries: 2 }, // The first time may only set the property
+    },
+  ],
+};
+
+function getScore(): number {
+  const score = getProperty("8BitScore");
+  if (score === "") return 0;
+  return parseInt(score.replace(",", ""));
+}
