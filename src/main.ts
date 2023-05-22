@@ -3,6 +3,7 @@ import {
   gametimeToInt,
   Item,
   myAdventures,
+  myAscensions,
   myClosetMeat,
   myLevel,
   myMeat,
@@ -10,7 +11,7 @@ import {
   takeCloset,
   turnsPlayed,
 } from "kolmafia";
-import { all_tasks, level_tasks, organ_tasks, quest_tasks } from "./tasks/all";
+import { all_tasks, dis_tasks, level_tasks, organ_tasks, quest_tasks } from "./tasks/all";
 import { prioritize } from "./route";
 import { Engine } from "./engine/engine";
 import { convertMilliseconds, debug } from "./lib";
@@ -34,6 +35,7 @@ export const args = Args.create("loopcasual", "A script to complete casual runs.
       ["quests", "Complete all quests only."],
       ["organ", "Get your steel organ only."],
       ["!organ", "Level up and complete all quests only."],
+      ["dis", "Complete the Suburbs of Dis quests."],
     ],
     default: "all",
   }),
@@ -117,6 +119,9 @@ export function main(command?: string): void {
     case "!organ":
       tasks = prioritize([...level_tasks(), ...quest_tasks()], true);
       break;
+    case "dis":
+      tasks = prioritize(dis_tasks(), true);
+      break;
   }
 
   const engine = new Engine(tasks);
@@ -192,6 +197,8 @@ function runComplete(): boolean {
       return have($skill`Liver of Steel`);
     case "!organ":
       return step("questL13Final") === 999 && myLevel() >= args.levelto;
+    case "dis":
+      return get("lastThingWithNoNameDefeated") === myAscensions();
     default:
       throw `Unknown goal ${args.goal}`;
   }
