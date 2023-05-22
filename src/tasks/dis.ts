@@ -9,6 +9,7 @@ import {
   $locations,
   $monster,
   $phylum,
+  flat,
   Macro,
   property,
   Snapper,
@@ -175,7 +176,7 @@ const zip = <T>(items: T[][]) => {
 export const DisQuest: Quest = {
   name: "Suburbs of Dis",
   tasks: [
-    ...zip(subquests.map(disFactory)).flat(),
+    ...flat(zip(subquests.map(disFactory))),
     {
       name: "Boss",
       after: subquests.map((subquest) => `Hunt Second ${subquest.name} Boss`),
